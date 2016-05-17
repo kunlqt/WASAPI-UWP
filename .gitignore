@@ -5,3 +5,7 @@ rtaudio/rtAudio/rtaudio.TestApp/x64
 rtaudio/rtAudio/rtaudio.UWP/ARM
 rtaudio/rtAudio/rtaudio.Windows/ARM
 rtaudio/rtAudio/rtaudio.TestApp/Debug
+ARM
+x64
+*.VC.db
+*.VC.VC.opendb

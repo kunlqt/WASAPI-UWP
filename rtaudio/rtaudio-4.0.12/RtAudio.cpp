@@ -185,7 +185,7 @@ RtAudio :: RtAudio( RtAudio::Api api ) throw()
   for ( unsigned int i=0; i<apis.size(); i++ ) {
     openRtApi( apis[i] );
 	DebugOut("\nKUNLQT RtAudio :: RtAudio openRtApi apis[%d]\n", i);
-    if ( rtapi_->getDeviceCount() ) break;
+    if (rtapi_ && rtapi_->getDeviceCount() ) break;
   }
 
   if ( rtapi_ ) return;
@@ -200,7 +200,8 @@ RtAudio :: RtAudio( RtAudio::Api api ) throw()
 
 RtAudio :: ~RtAudio() throw()
 {
-  delete rtapi_;
+	if (rtapi_)
+		delete rtapi_;
 }
 
 void RtAudio :: openStream( RtAudio::StreamParameters *outputParameters,
@@ -254,6 +255,9 @@ void RtApi :: openStream( RtAudio::StreamParameters *oParams,
     return;
   }
 
+  // Clear stream information potentially left from a previously open stream.
+  clearStreamInfo();
+
   if ( oParams && oParams->nChannels < 1 ) {
 	  DebugOut("\nKUNLQT RtApi::openStream: a non-NULL output StreamParameters structure cannot have an nChannels value less than one.\n");
     errorText_ = "RtApi::openStream: a non-NULL output StreamParameters structure cannot have an nChannels value less than one.";
@@ -304,7 +308,7 @@ void RtApi :: openStream( RtAudio::StreamParameters *oParams,
     }
   }
 
-  clearStreamInfo();
+  //clearStreamInfo();
   bool result;
 
   if ( oChannels > 0 ) {
@@ -5238,11 +5242,13 @@ void RtApiWinrt :: startStream(void)
   }
 
   stream_.state = STREAM_RUNNING;
-  DebugOut("\nKUNLQT RtApiWinrt :: startStream stream_.mode = %s \n", stream_.mode);
-  if(stream_.mode == OUTPUT || stream_.mode == DUPLEX)
-    spRenderer_->StartPlaybackAsync();
+
+  
+
   if(stream_.mode == INPUT || stream_.mode == DUPLEX)
     spCapture_->StartCaptureAsync();
+  if (stream_.mode == OUTPUT || stream_.mode == DUPLEX)
+	  spRenderer_->StartPlaybackAsync();
 }
 
 void RtApiWinrt :: stopStream(void)
@@ -5787,6 +5793,7 @@ void RtApiWinrt::enumerateDevices(void)
             if (nullptr != DevicePropString)
             {
               DeviceInfoString = DeviceInfoString + " --> EventDriven(" + DevicePropString + ")";
+			  DebugOut("\nKUNLQT enumerateDevices DeviceInfoString = %s!\n", DeviceInfoString);
             }
           }
 
@@ -5814,7 +5821,8 @@ void RtApiWinrt::enumerateDevices(void)
     SetEvent(eventHandle);
   },
   concurrency::task_continuation_context::use_arbitrary());
-  WaitForSingleObjectEx(eventHandle, INFINITE, FALSE);
+  
+  (eventHandle, INFINITE, FALSE);
   CloseHandle(eventHandle);
 
   //setup playback

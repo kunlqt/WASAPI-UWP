@@ -204,7 +204,7 @@ void MainPage::btnStartCapture_Click(Platform::Object^ sender, Windows::UI::Xaml
 		adac->startStream();
 		//char input;
 		//std::cout << "\nRunning ... press <enter> to quit.\n";
-		DebugOut("\nKUNLQT Running ... press <enter> to quit.\n");
+		DebugOut("\nKUNLQT startStream Running ... press <enter> to quit.\n");
 		//std::cin.get(input);
 		// Stop the stream.
 		//adac->stopStream();

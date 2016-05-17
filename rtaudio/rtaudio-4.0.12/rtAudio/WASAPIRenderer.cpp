@@ -270,8 +270,27 @@ HRESULT WASAPIRenderer::ConfigureDeviceInternal()
     AudioClientProperties audioProps = {0};
     audioProps.cbSize = sizeof( AudioClientProperties );
     audioProps.bIsOffload = m_DeviceProps.IsHWOffload;
+
+	//-------------------------------------------------------------------------
+	// Description: Audio stream categories
+	//
+	// ForegroundOnlyMedia     - (deprecated for Win10) Music, Streaming audio
+	// BackgroundCapableMedia  - (deprecated for Win10) Video with audio
+	// Communications          - VOIP, chat, phone call
+	// Alerts                  - Alarm, Ring tones
+	// SoundEffects            - Sound effects, clicks, dings
+	// GameEffects             - Game sound effects
+	// GameMedia               - Background audio for games
+	// GameChat                - In game player chat
+	// Speech                  - Speech recognition
+	// Media                   - Music, Streaming audio
+	// Movie                   - Video with audio
+	// Other                   - All other streams (default)
+	//
+	audioProps.eCategory = AudioCategory_Media;
     //audioProps.eCategory = ( m_DeviceProps.IsBackground ? AudioCategory_BackgroundCapableMedia : AudioCategory_ForegroundOnlyMedia );
-	
+	//-------------------------------------------------------------------------
+
     if (m_DeviceProps.IsRawChosen && m_DeviceProps.IsRawSupported)
     {
         audioProps.Options = AUDCLNT_STREAMOPTIONS_RAW;
@@ -386,18 +405,18 @@ HRESULT WASAPIRenderer::ConfigureSource()
             hr = E_OUTOFMEMORY;
         }
     }
-    //else
-    //{
-    //    m_MFSource = new MFSampleGenerator();
-    //    if (m_MFSource)
-    //    {
-    //        hr = m_MFSource->Initialize( m_DeviceProps.ContentStream, FramesPerPeriod, m_MixFormat );
-    //    }
-    //    else
-    //    {
-    //        hr = E_OUTOFMEMORY;
-    //    }
-    //}
+	/*else
+	{
+		m_MFSource = new MFSampleGenerator();
+		if (m_MFSource)
+		{
+			hr = m_MFSource->Initialize(m_DeviceProps.ContentStream, FramesPerPeriod, m_MixFormat);
+		}
+		else
+		{
+			hr = E_OUTOFMEMORY;
+		}
+	}*/
 
     return hr;
 }
@@ -414,7 +433,7 @@ HRESULT WASAPIRenderer::StartPlaybackAsync()
     // We should be stopped if the user stopped playback, or we should be
     // initialzied if this is the first time through getting ready to playback.
     if((m_DeviceStateChanged->GetState() == DeviceStateStopped) ||
-         (m_DeviceStateChanged->GetState() == DeviceStateInitialized))
+         (m_DeviceStateChanged->GetState() == DeviceStateActivated))
     {
         // Setup either ToneGeneration or File Playback
         hr = ConfigureSource();
@@ -431,14 +450,14 @@ HRESULT WASAPIRenderer::StartPlaybackAsync()
             MFPutWorkItem2(MFASYNC_CALLBACK_QUEUE_MULTITHREADED,0,&m_xStartPlayback,nullptr);
         });
     }
-    else if(m_DeviceStateChanged->GetState() == DeviceStatePaused)
-    {
-        concurrency::create_task([this]()
-        {
-            WaitForSingleObjectEx(m_EventHandle,INFINITE,FALSE);
-            MFPutWorkItem2(MFASYNC_CALLBACK_QUEUE_MULTITHREADED,0,&m_xStartPlayback,nullptr);
-        });
-    }
+	else if (m_DeviceStateChanged->GetState() == DeviceStatePaused)
+	{
+		concurrency::create_task([this]()
+		{
+			WaitForSingleObjectEx(m_EventHandle, INFINITE, FALSE);
+			MFPutWorkItem2(MFASYNC_CALLBACK_QUEUE_MULTITHREADED, 0, &m_xStartPlayback, nullptr);
+		});
+	}
 
     // Otherwise something else happened
     //return E_FAIL;
